@@ -1,3 +1,5 @@
+let root = null
+
 function createTextNode(text) {
   return {
     type: "TEXT_ELEMENT",
@@ -28,6 +30,8 @@ function render(el, container) {
       children: [el],
     },
   };
+
+  root = nextWorkOfUnit
 }
 
 function createDom(type) {
@@ -68,6 +72,19 @@ function initFiber(fiber){
   });
 }
 
+function commitRoot(root){
+  commitWork(root.firstChild)
+}
+
+// 递归添加dom
+function commitWork(fiber){
+  if(!fiber) return;
+
+  fiber.parent.dom.append(fiber.dom)
+  commitWork(fiber.firstChild)
+  commitWork(fiber.sibling)
+}
+
 // 渲染任务任务移至performWorkOffUnit,原来的render负责数据初始化调配
 function performWorkOfUnit(fiber) {
   // 避免空节点
@@ -76,7 +93,6 @@ function performWorkOfUnit(fiber) {
     const dom = (fiber.dom = createDom(fiber.type));
     // 2.设置节点属性
     updateDomAttribute(dom, fiber.props);
-    fiber.parent.dom.append(dom);
   }
 
   // 3. vdom转链表,处理子节点
@@ -122,6 +138,11 @@ function workLoop(IdleDeadline) {
 
     // 当有空闲的时候才开锁
     lock = IdleDeadline.timeRemaining() < 1;
+  }
+
+  if(!nextWorkOfUnit && root) {
+    commitRoot(root)
+    root = null
   }
 
   window.requestIdleCallback(workLoop);
