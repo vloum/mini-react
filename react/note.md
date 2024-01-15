@@ -5,3 +5,9 @@
       2. 最后提交需要根节点
       3. 记得兄弟姐妹也要做append
 2. 支持function component
+   1. 差异是什么？
+      ```js
+      const App = <div></div>
+      const APPFunction = () => <div></div>
+      ``` 
+      所以执行` APPFunction `就能得到` APP `然后继续构建vdom？

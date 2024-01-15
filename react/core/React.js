@@ -23,6 +23,10 @@ function createElement(type, props, ...children) {
   };
 }
 
+function isFunctionComponent(type) {
+  return typeof type === 'function'
+}
+
 function render(el, container) {
   nextWorkOfUnit = {
     dom: container,
@@ -47,10 +51,10 @@ function updateDomAttribute(dom, props) {
   });
 }
 
-function initFiber(fiber){
+function initFiber(fiber, children){
   // 记录上一个执行的节点，设置它的sibling指向
   let preWork = null;
-  fiber.props.children.forEach((child, index) => {
+  children.forEach((child, index) => {
     // 下一个work
     const newWork = {
       type: child.type,
@@ -80,15 +84,27 @@ function commitRoot(root){
 function commitWork(fiber){
   if(!fiber) return;
 
-  fiber.parent.dom.append(fiber.dom)
+  // 一直往上找到存在dom的parent
+  let fiberParent = fiber.parent
+  while(!fiberParent.dom) {
+    fiberParent = fiberParent.parent
+  }
+
+  if(fiberParent.dom) {
+    fiberParent.dom.append(fiber.dom)
+  }
+
   commitWork(fiber.firstChild)
   commitWork(fiber.sibling)
 }
 
 // 渲染任务任务移至performWorkOffUnit,原来的render负责数据初始化调配
 function performWorkOfUnit(fiber) {
+  console.log('fiber--', fiber)
+
+  const isComponent = isFunctionComponent(fiber.type)
   // 避免空节点
-  if (!fiber.dom) {
+  if (!fiber.dom && !isComponent) {
     // 1.构建节点
     const dom = (fiber.dom = createDom(fiber.type));
     // 2.设置节点属性
@@ -96,7 +112,8 @@ function performWorkOfUnit(fiber) {
   }
 
   // 3. vdom转链表,处理子节点
-  initFiber(fiber)
+  const children = isComponent ? [fiber.type()] : fiber.props.children
+  initFiber(fiber,children)
 
   // 以上已经处理了一个任务了，下面需要返回下一个任务
   // 先子级，后兄弟，后父级的兄弟
