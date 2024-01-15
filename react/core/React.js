@@ -1,5 +1,5 @@
-let root = null
-const TXT = 'TEXT_ELEMENT'
+let root = null;
+const TXT = "TEXT_ELEMENT";
 
 function createTextNode(text) {
   return {
@@ -19,20 +19,16 @@ function createElement(type, props, ...children) {
       children: children.map((child) => {
         console.log("createElement--child--", child);
 
-        if(!child) {
-          return createTextNode('undefined')
+        if (!child) {
+          return createTextNode("undefined");
         }
 
-        const isText = typeof child === "string" || typeof child === "number"
+        const isText = typeof child === "string" || typeof child === "number";
 
         return isText ? createTextNode(child) : child;
       }),
     },
   };
-}
-
-function isFunctionComponent(type) {
-  return typeof type === 'function'
 }
 
 function render(el, container) {
@@ -43,7 +39,7 @@ function render(el, container) {
     },
   };
 
-  root = nextWorkOfUnit
+  root = nextWorkOfUnit;
 }
 
 function createDom(type) {
@@ -59,7 +55,7 @@ function updateDomAttribute(dom, props) {
   });
 }
 
-function initFiber(fiber, children){
+function initFiber(fiber, children) {
   // 记录上一个执行的节点，设置它的sibling指向
   let preWork = null;
   children.forEach((child, index) => {
@@ -84,44 +80,54 @@ function initFiber(fiber, children){
   });
 }
 
-function commitRoot(root){
-  commitWork(root.firstChild)
+function commitRoot(root) {
+  commitWork(root.firstChild);
 }
 
 // 递归添加dom
-function commitWork(fiber){
-  if(!fiber) return;
+function commitWork(fiber) {
+  if (!fiber) return;
 
   // 一直往上找到存在dom的parent
-  let fiberParent = fiber.parent
-  while(!fiberParent.dom) {
-    fiberParent = fiberParent.parent
+  let fiberParent = fiber.parent;
+  while (!fiberParent.dom) {
+    fiberParent = fiberParent.parent;
   }
 
-  if(fiber.dom) {
-    fiberParent.dom.append(fiber.dom)
+  if (fiber.dom) {
+    fiberParent.dom.append(fiber.dom);
   }
 
-  commitWork(fiber.firstChild)
-  commitWork(fiber.sibling)
+  commitWork(fiber.firstChild);
+  commitWork(fiber.sibling);
 }
 
-// 渲染任务任务移至performWorkOffUnit,原来的render负责数据初始化调配
-function performWorkOfUnit(fiber) {
-  console.log('fiber--', fiber)
+function updateFunctionComponent(fiber) {
+  const children = [fiber.type(fiber.props)];
 
-  const isComponent = isFunctionComponent(fiber.type)
-  // 避免空节点
-  if (!fiber.dom && !isComponent) {
+  initFiber(fiber, children);
+}
+
+function updateHostComponent(fiber) {
+  if (!fiber.dom) {
     // 1.构建节点
     const dom = (fiber.dom = createDom(fiber.type));
     // 2.设置节点属性
     updateDomAttribute(dom, fiber.props);
   }
 
-  // 3. vdom转链表,处理子节点
-  const children = isComponent ? [fiber.type(fiber.props)] : fiber.props.children
-  initFiber(fiber,children)
+  const children = fiber.props.children;
+  initFiber(fiber, children);
+}
+
+// 渲染任务任务移至performWorkOffUnit,原来的render负责数据初始化调配
+function performWorkOfUnit(fiber) {
+  console.log("fiber--", fiber);
+
+  const isFunctionComponent =
+    typeof fiber.type === "function"
+      ? updateFunctionComponent(fiber)
+      : updateHostComponent(fiber);
 
   // 以上已经处理了一个任务了，下面需要返回下一个任务
   // 先子级，后兄弟，后父级的兄弟
@@ -129,11 +135,14 @@ function performWorkOfUnit(fiber) {
     return fiber.firstChild;
   }
 
-  if (fiber.sibling) {
-    return fiber.sibling;
-  }
 
-  return fiber.parent?.sibling;
+  // 向上寻找,知道root往上即结束
+  let fiberParent = fiber
+  while(fiberParent) {
+    if(fiberParent.sibling) return fiberParent.sibling
+
+    fiberParent = fiberParent.parent
+  }
 }
 
 /**
@@ -165,9 +174,9 @@ function workLoop(IdleDeadline) {
     lock = IdleDeadline.timeRemaining() < 1;
   }
 
-  if(!nextWorkOfUnit && root) {
-    commitRoot(root)
-    root = null
+  if (!nextWorkOfUnit && root) {
+    commitRoot(root);
+    root = null;
   }
 
   window.requestIdleCallback(workLoop);

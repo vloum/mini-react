@@ -17,7 +17,8 @@ function APP() {
   return (
           <div>
             <p>1</p>
-            <Component></Component>
+            <Component title={1}></Component>
+            <Component title={2}></Component>
           </div>
         )
 }
