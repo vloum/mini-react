@@ -1,8 +1,9 @@
 let root = null
+const TXT = 'TEXT_ELEMENT'
 
 function createTextNode(text) {
   return {
-    type: "TEXT_ELEMENT",
+    type: TXT,
     props: {
       nodeValue: text,
       children: [],
@@ -17,7 +18,14 @@ function createElement(type, props, ...children) {
       ...props,
       children: children.map((child) => {
         console.log("createElement--child--", child);
-        return typeof child === "string" ? createTextNode(child) : child;
+
+        if(!child) {
+          return createTextNode('undefined')
+        }
+
+        const isText = typeof child === "string" || typeof child === "number"
+
+        return isText ? createTextNode(child) : child;
       }),
     },
   };
@@ -39,7 +47,7 @@ function render(el, container) {
 }
 
 function createDom(type) {
-  return type === "TEXT_ELEMENT"
+  return type === TXT
     ? document.createTextNode("")
     : document.createElement(type);
 }
@@ -57,10 +65,10 @@ function initFiber(fiber, children){
   children.forEach((child, index) => {
     // 下一个work
     const newWork = {
-      type: child.type,
+      type: child?.type,
       dom: null,
       parent: fiber,
-      props: child.props,
+      props: child?.props,
       firstChild: null,
       sibling: null,
     };
@@ -90,7 +98,7 @@ function commitWork(fiber){
     fiberParent = fiberParent.parent
   }
 
-  if(fiberParent.dom) {
+  if(fiber.dom) {
     fiberParent.dom.append(fiber.dom)
   }
 
@@ -112,7 +120,7 @@ function performWorkOfUnit(fiber) {
   }
 
   // 3. vdom转链表,处理子节点
-  const children = isComponent ? [fiber.type()] : fiber.props.children
+  const children = isComponent ? [fiber.type(fiber.props)] : fiber.props.children
   initFiber(fiber,children)
 
   // 以上已经处理了一个任务了，下面需要返回下一个任务

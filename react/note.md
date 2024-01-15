@@ -10,4 +10,4 @@
       const App = <div></div>
       const APPFunction = () => <div></div>
       ``` 
-      所以执行` APPFunction `就能得到` APP `然后继续构建vdom？
+      所以执行` APPFunction `就能得到` APP `然后继续构建vdom链表？

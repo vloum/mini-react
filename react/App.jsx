@@ -9,16 +9,18 @@ function CountComponent() {
   )
 }
 
-function Component() {
-  return <div>哈哈哈<CountComponent></CountComponent></div>
+function Component({ title }) {
+  return <div>{title}<CountComponent></CountComponent></div>
 }
 
-const APP = (
-  <div>
-    <p>1</p>
-    <Component></Component>
-  </div>
-)
+function APP() {
+  return (
+          <div>
+            <p>1</p>
+            <Component></Component>
+          </div>
+        )
+}
 
 
 export default APP
